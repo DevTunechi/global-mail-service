@@ -6,7 +6,7 @@ export interface MailProvider {
   shortName: string
   color: string          // brand accent color
   textColor: string      // for contrast on colored bg
-  logoUrl: string        // SVG / PNG logo
+  logoUrl: string        // Points to local public file /name.png
   emailHint: string      // placeholder hint
 }
 
@@ -53,7 +53,7 @@ export const PROVIDERS: MailProvider[] = [
     shortName: 'Mail.com',
     color: '#005A9C',
     textColor: '#fff',
-    logoUrl: '/mail.png',
+    logoUrl: '/mailcom.png',
     emailHint: 'you@mail.com',
   },
   {
@@ -81,6 +81,6 @@ export const PROVIDERS: MailProvider[] = [
     color: '#D83B01',
     textColor: '#fff',
     logoUrl: '/office365.png',
-    emailHint: "you@office365.com"
+    emailHint: 'you@company.com',
   },
 ]

