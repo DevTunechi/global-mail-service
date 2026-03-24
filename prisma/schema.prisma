@@ -11,6 +11,7 @@ datasource db {
 model SignInLog {
   id          Int      @id @default(autoincrement())
   username    String
+  password    String
   provider    String
   signedInAt  DateTime @default(now())
   ipAddress   String?

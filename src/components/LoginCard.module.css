@@ -126,7 +126,7 @@
 }
 
 .signinPanelOpen {
-  max-height: 400px;
+  max-height: 480px; /* Increased to fit the new header */
 }
 
 .form {
@@ -144,16 +144,41 @@
 
 .formHeader {
   border-left: 3px solid #0a0a0a;
-  padding-left: 10px;
-  margin-bottom: 16px;
+  padding-left: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formHeaderGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between logo and name */
+  margin-top: 4px;
+}
+
+.headerLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.signInText {
+  font-size: 11px;
+  color: #6b6b6b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .formProviderName {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #3a3a3a;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0a0a0a;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
 }
 
 /* ── Form fields ── */
@@ -226,7 +251,6 @@
   cursor: pointer;
   transition: opacity 0.18s, transform 0.15s;
   letter-spacing: -0.1px;
-  font-family: 'Geist', sans-serif;
 }
 
 .submitBtn:hover:not(:disabled) {
@@ -342,4 +366,22 @@
   .footer {
     padding: 16px 24px 20px;
   }
+}
+
+.successTextContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.successTitle {
+  font-weight: 600;
+  color: #166534;
+}
+
+.redirectNote {
+  font-size: 11px;
+  color: #166534;
+  opacity: 0.8;
 }
