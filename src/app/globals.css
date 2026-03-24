@@ -1,0 +1,73 @@
+/* src/app/globals.css */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Geist', 'Helvetica Neue', sans-serif;
+  --bg: #f4f4f2;
+  --white: #ffffff;
+  --black: #0a0a0a;
+  --gray-100: #f7f7f7;
+  --gray-200: #ebebeb;
+  --gray-300: #d4d4d4;
+  --gray-500: #6b6b6b;
+  --gray-700: #3a3a3a;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-card: 0 2px 24px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-hover: 0 4px 28px rgba(0,0,0,0.11), 0 2px 6px rgba(0,0,0,0.07);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--black);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle dot grid background */
+body {
+  background-image: radial-gradient(circle, #c8c8c4 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-color: #f4f4f2;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+input {
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+/* Keyframes */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panelOpen {
+  from { opacity: 0; transform: translateY(-8px) scaleY(0.96); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
