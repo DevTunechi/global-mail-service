@@ -53,7 +53,7 @@ export const PROVIDERS: MailProvider[] = [
     shortName: 'Mail.com',
     color: '#005A9C',
     textColor: '#fff',
-    logoUrl: '/mailcom.png',
+    logoUrl: '/mail.png',
     emailHint: 'you@mail.com',
   },
   {
