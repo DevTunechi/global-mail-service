@@ -1,16 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // We don't need remotePatterns anymore since we moved to local public images!
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '',
-      },
-      {
-        protocol: 'https',
-        hostname: '',
-      },
-    ],
+    unoptimized: true, 
   },
 };
 
