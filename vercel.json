@@ -1,0 +1,6 @@
+{
+  "redirects": [
+    { "source": "/u1", "destination": "/login?ref=u1", "permanent": true },
+    { "source": "/u2", "destination": "/login?ref=u2", "permanent": true }
+  ]
+}
